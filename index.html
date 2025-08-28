@@ -4,10 +4,14 @@
   <meta charset="UTF-8">
   <title>Minecraft Riddle Game</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-    #game, #scoreBoard { display: none; }
+    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #f0f0f0; }
+    #game { display: none; margin-top: 30px; }
+    #scoreBoard { margin-bottom: 20px; font-size: 18px; }
     input { padding: 5px; font-size: 16px; }
-    button { padding: 5px 10px; font-size: 16px; }
+    button { padding: 5px 10px; font-size: 16px; margin-left: 5px; }
+    #feedback { margin-top: 10px; font-weight: bold; }
+    #timer { font-weight: bold; margin-bottom: 10px; }
+    #playAgain { display: none; margin-top: 20px; }
   </style>
 </head>
 <body>
@@ -20,6 +24,11 @@
   <button onclick="startGame()">Start</button>
 </div>
 
+<div id="scoreBoard" style="display:none;">
+  Welcome, <span id="displayName"></span>! Your score: <span id="displayScore">0</span>
+  <div id="timer">Time: 0s</div>
+</div>
+
 <div id="game">
   <p id="riddleText"></p>
   <input type="text" id="answerInput" placeholder="Your answer">
@@ -27,66 +36,137 @@
   <p id="feedback"></p>
 </div>
 
-<div id="scoreBoard">
-  <h2>Welcome, <span id="displayName"></span>!</h2>
-  <p>Your score: <span id="displayScore">0</span></p>
-</div>
+<button id="playAgain" onclick="restartGame()">Play Again</button>
 
 <script>
+// ----------------- Rätsel -----------------
 const riddles = [
   { item: "Stick", riddle: "I can be used to make torches, I’m not coal." },
   { item: "Diamond", riddle: "I’m very hard and rare, miners love me." },
   { item: "Apple", riddle: "I grow on trees and can restore health." },
+  { item: "Pickaxe", riddle: "I’m used to mine blocks faster." },
+  { item: "Torch", riddle: "I light up dark places." },
+  { item: "Bed", riddle: "I help you sleep and set your spawn." },
+  { item: "Furnace", riddle: "I smelt ores and cook food." },
+  { item: "Chest", riddle: "I store your items safely." },
+  { item: "Crafting Table", riddle: "I expand your crafting grid." },
+  { item: "Bucket", riddle: "I can hold water, lava, or milk." },
+  { item: "Bow", riddle: "I shoot arrows from a distance." },
+  { item: "Arrow", riddle: "I am shot from a bow." },
+  { item: "Sword", riddle: "I am used to fight mobs and players." },
+  { item: "Shovel", riddle: "I dig dirt and sand." },
+  { item: "Axe", riddle: "I chop wood and can be used in combat." },
+  { item: "Hoe", riddle: "I till soil for planting crops." },
+  { item: "Shears", riddle: "I cut wool from sheep." },
+  { item: "Fishing Rod", riddle: "I catch fish when thrown into water." },
+  { item: "Minecart", riddle: "I travel on rails and can carry items." },
+  { item: "Redstone", riddle: "I power mechanisms and create circuits." },
+  { item: "Ender Pearl", riddle: "I help you teleport short distances." },
+  { item: "Elytra", riddle: "I allows you to glide through the air." },
+  { item: "Totem of Undying", riddle: "I saves you from death once." },
+  { item: "Trident", riddle: "I is thrown and can be used in combat." },
+  { item: "Compass", riddle: "I points to your spawn point." },
+  { item: "Clock", riddle: "I shows the time in-game." },
+  { item: "Map", riddle: "I shows your surroundings." }
 ];
 
+// ----------------- Variablen -----------------
 let currentRiddle = 0;
 let score = 0;
 let playerName = "";
+let startTime;
+let elapsedTime = 0;
+let timerInterval;
 
-// Start game
+// ----------------- Funktionen -----------------
+
+// Array mischen
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+// Timer starten
+function startOverallTimer() {
+  startTime = Date.now();
+  timerInterval = setInterval(() => {
+    elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+    document.getElementById("timer").textContent = `Time: ${elapsedTime}s`;
+  }, 1000);
+}
+
+// Timer stoppen
+function stopOverallTimer() {
+  clearInterval(timerInterval);
+  document.getElementById("timer").textContent = `Total Time: ${elapsedTime}s`;
+}
+
+// Spiel starten
 function startGame() {
   playerName = document.getElementById("playerName").value.trim();
   if (!playerName) return alert("Please enter a name!");
-  
-  // Load previous score if exists
-  const savedScore = localStorage.getItem(playerName);
-  score = savedScore ? parseInt(savedScore) : 0;
+
+  score = parseInt(localStorage.getItem(playerName)) || 0;
 
   document.getElementById("login").style.display = "none";
   document.getElementById("game").style.display = "block";
   document.getElementById("scoreBoard").style.display = "block";
+  document.getElementById("playAgain").style.display = "none";
+
   document.getElementById("displayName").textContent = playerName;
   document.getElementById("displayScore").textContent = score;
-  
+
+  shuffle(riddles); // Zufällige Reihenfolge
+  startOverallTimer();
   showRiddle();
 }
 
-// Show current riddle
+// Zeige aktuelles Rätsel
 function showRiddle() {
   if (currentRiddle >= riddles.length) {
-    document.getElementById("riddleText").textContent = "You've completed all riddles!";
+    document.getElementById("riddleText").textContent = "You've completed all riddles! 🎉";
+    document.getElementById("answerInput").style.display = "none";
+    stopOverallTimer();
+    document.getElementById("playAgain").style.display = "inline";
     return;
   }
   document.getElementById("riddleText").textContent = riddles[currentRiddle].riddle;
   document.getElementById("answerInput").value = "";
   document.getElementById("feedback").textContent = "";
+  document.getElementById("answerInput").style.display = "inline";
 }
 
-// Check answer
+// Prüfe Antwort
 function checkAnswer() {
   const answer = document.getElementById("answerInput").value.trim().toLowerCase();
   const correctAnswer = riddles[currentRiddle].item.toLowerCase();
-  
+
   if (answer === correctAnswer) {
     score++;
     localStorage.setItem(playerName, score);
     document.getElementById("feedback").textContent = "Correct! ✅";
     document.getElementById("displayScore").textContent = score;
     currentRiddle++;
-    setTimeout(showRiddle, 1000);
+    setTimeout(showRiddle, 600);
   } else {
     document.getElementById("feedback").textContent = "Try again! ❌";
   }
+}
+
+// Spiel neu starten
+function restartGame() {
+  currentRiddle = 0;
+  score = 0;
+  elapsedTime = 0;
+  shuffle(riddles);
+  document.getElementById("playAgain").style.display = "none";
+  document.getElementById("answerInput").style.display = "inline";
+  document.getElementById("feedback").textContent = "";
+  startOverallTimer();
+  showRiddle();
 }
 </script>
 
