@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Minecraft Riddle Game</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+    #game, #scoreBoard { display: none; }
+    input { padding: 5px; font-size: 16px; }
+    button { padding: 5px 10px; font-size: 16px; }
+  </style>
+</head>
+<body>
+
+<h1>Minecraft Riddle Game</h1>
+
+<div id="login">
+  <p>Enter your name to start:</p>
+  <input type="text" id="playerName" placeholder="Your name">
+  <button onclick="startGame()">Start</button>
+</div>
+
+<div id="game">
+  <p id="riddleText"></p>
+  <input type="text" id="answerInput" placeholder="Your answer">
+  <button onclick="checkAnswer()">Submit</button>
+  <p id="feedback"></p>
+</div>
+
+<div id="scoreBoard">
+  <h2>Welcome, <span id="displayName"></span>!</h2>
+  <p>Your score: <span id="displayScore">0</span></p>
+</div>
+
+<script>
+const riddles = [
+  { item: "Stick", riddle: "I can be used to make torches, I’m not coal." },
+  { item: "Diamond", riddle: "I’m very hard and rare, miners love me." },
+  { item: "Apple", riddle: "I grow on trees and can restore health." },
+];
+
+let currentRiddle = 0;
+let score = 0;
+let playerName = "";
+
+// Start game
+function startGame() {
+  playerName = document.getElementById("playerName").value.trim();
+  if (!playerName) return alert("Please enter a name!");
+  
+  // Load previous score if exists
+  const savedScore = localStorage.getItem(playerName);
+  score = savedScore ? parseInt(savedScore) : 0;
+
+  document.getElementById("login").style.display = "none";
+  document.getElementById("game").style.display = "block";
+  document.getElementById("scoreBoard").style.display = "block";
+  document.getElementById("displayName").textContent = playerName;
+  document.getElementById("displayScore").textContent = score;
+  
+  showRiddle();
+}
+
+// Show current riddle
+function showRiddle() {
+  if (currentRiddle >= riddles.length) {
+    document.getElementById("riddleText").textContent = "You've completed all riddles!";
+    return;
+  }
+  document.getElementById("riddleText").textContent = riddles[currentRiddle].riddle;
+  document.getElementById("answerInput").value = "";
+  document.getElementById("feedback").textContent = "";
+}
+
+// Check answer
+function checkAnswer() {
+  const answer = document.getElementById("answerInput").value.trim().toLowerCase();
+  const correctAnswer = riddles[currentRiddle].item.toLowerCase();
+  
+  if (answer === correctAnswer) {
+    score++;
+    localStorage.setItem(playerName, score);
+    document.getElementById("feedback").textContent = "Correct! ✅";
+    document.getElementById("displayScore").textContent = score;
+    currentRiddle++;
+    setTimeout(showRiddle, 1000);
+  } else {
+    document.getElementById("feedback").textContent = "Try again! ❌";
+  }
+}
+</script>
+
+</body>
+</html>
