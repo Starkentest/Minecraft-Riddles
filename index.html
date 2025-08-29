@@ -5,38 +5,76 @@
   <title>Minecraft Riddle Game</title>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #f0f0f0; }
-    #game { display: none; margin-top: 30px; }
-    #scoreBoard { margin-bottom: 20px; font-size: 18px; }
+    #game, #login, #scoreBoard, #leaderboard, #instructions { display: none; }
     input { padding: 5px; font-size: 16px; }
-    button { padding: 5px 10px; font-size: 16px; margin-left: 5px; }
+    button { padding: 5px 10px; font-size: 16px; margin: 5px; }
     #feedback { margin-top: 10px; font-weight: bold; }
-    #timer { font-weight: bold; margin-bottom: 10px; }
+    #timer { font-weight: bold; margin-bottom: 10px; transition: color 0.3s; }
     #playAgain { display: none; margin-top: 20px; }
+    #leaderboard table { margin: 0 auto; border-collapse: collapse; }
+    #leaderboard th, #leaderboard td { border: 1px solid #333; padding: 5px 10px; }
+    #leaderboard th { background: #ddd; }
   </style>
 </head>
 <body>
 
 <h1>Minecraft Riddle Game</h1>
 
+<!-- Startseite / Anleitung -->
+<div id="instructions">
+  <h2>📖 Instructions</h2>
+  <p>Welcome to the Minecraft Riddle Game!</p>
+  <ul style="text-align:left; display:inline-block;">
+    <li>Guess the correct Minecraft item from the riddle.</li>
+    <li>Type your answer and press <b>Enter</b> or click <b>Submit</b>.</li>
+    <li>If you're stuck, use <b>Skip</b> ⏭️ (adds <b>+5 seconds penalty</b>).</li>
+    <li>You earn <b>1 point</b> for each correct answer.</li>
+    <li>Your <b>highscore</b> is saved automatically.</li>
+  </ul>
+  <button onclick="showLogin()">Start Game</button>
+  <button onclick="showLeaderboard()">Leaderboard 🏆</button>
+</div>
+
+<!-- Login -->
 <div id="login">
   <p>Enter your name to start:</p>
   <input type="text" id="playerName" placeholder="Your name">
-  <button onclick="startGame()">Start</button>
+  <button onclick="startGame()">Play</button>
+  <button onclick="backToInstructions()">⬅ Back</button>
 </div>
 
-<div id="scoreBoard" style="display:none;">
-  Welcome, <span id="displayName"></span>! Your score: <span id="displayScore">0</span>
+<!-- Scoreboard -->
+<div id="scoreBoard">
+  Welcome, <span id="displayName"></span>!  
+  Your score: <span id="displayScore">0</span>  
   <div id="timer">Time: 0s</div>
+  <button onclick="showLeaderboard()">Leaderboard 🏆</button>
 </div>
 
+<!-- Spiel -->
 <div id="game">
   <p id="riddleText"></p>
   <input type="text" id="answerInput" placeholder="Your answer">
   <button onclick="checkAnswer()">Submit</button>
+  <button onclick="skipRiddle()">Skip ⏭️</button>
   <p id="feedback"></p>
 </div>
 
+<!-- Play Again -->
 <button id="playAgain" onclick="restartGame()">Play Again</button>
+
+<!-- Leaderboard -->
+<div id="leaderboard">
+  <h2>🏆 Leaderboard</h2>
+  <table>
+    <thead>
+      <tr><th>Rank</th><th>Player</th><th>Highscore</th></tr>
+    </thead>
+    <tbody id="leaderboardBody"></tbody>
+  </table>
+  <br>
+  <button onclick="backToInstructions()">⬅ Back</button>
+</div>
 
 <script>
 // ----------------- Rätsel -----------------
@@ -62,69 +100,92 @@ const riddles = [
   { item: "Minecart", riddle: "I travel on rails and can carry items." },
   { item: "Redstone", riddle: "I power mechanisms and create circuits." },
   { item: "Ender Pearl", riddle: "I help you teleport short distances." },
-  { item: "Elytra", riddle: "I allows you to glide through the air." },
-  { item: "Totem of Undying", riddle: "I saves you from death once." },
-  { item: "Trident", riddle: "I is thrown and can be used in combat." },
-  { item: "Compass", riddle: "I points to your spawn point." },
-  { item: "Clock", riddle: "I shows the time in-game." },
-  { item: "Map", riddle: "I shows your surroundings." }
+  { item: "Elytra", riddle: "I allow you to glide through the air." },
+  { item: "Totem of Undying", riddle: "I save you from death once." },
+  { item: "Trident", riddle: "I am thrown and can be used in combat." },
+  { item: "Compass", riddle: "I point to your spawn point." },
+  { item: "Clock", riddle: "I show the time in-game." },
+  { item: "Map", riddle: "I show your surroundings." },
+  { item: "Nether Star", riddle: "I drop from the Wither and can be used to craft a beacon." },
+  { item: "Beacon", riddle: "I shine a beam of light and give status effects." },
+  { item: "Shield", riddle: "I block attacks from enemies." },
+  { item: "Book", riddle: "I can be enchanted or used for crafting an enchanting table." },
+  { item: "Anvil", riddle: "I repair and combine enchanted items." },
+  { item: "Potion", riddle: "I can give you effects when you drink me." },
+  { item: "Enchantment Table", riddle: "I let you enchant tools, weapons, and armor." },
+  { item: "Obsidian", riddle: "I am very strong and needed for a Nether portal." },
+  { item: "End Portal Frame", riddle: "I am needed to reach the End dimension." },
+  { item: "Dragon Egg", riddle: "I drop after defeating the Ender Dragon." }
 ];
 
 // ----------------- Variablen -----------------
 let currentRiddle = 0;
 let score = 0;
 let playerName = "";
+let highscore = 0;
 let startTime;
 let elapsedTime = 0;
 let timerInterval;
 
-// ----------------- Funktionen -----------------
-
-// Array mischen
-function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
+// ----------------- Navigation -----------------
+function showInstructions() {
+  hideAll();
+  document.getElementById("instructions").style.display = "block";
+}
+function showLogin() {
+  hideAll();
+  document.getElementById("login").style.display = "block";
+}
+function showLeaderboard() {
+  hideAll();
+  document.getElementById("leaderboard").style.display = "block";
+  updateLeaderboard();
+}
+function backToInstructions() {
+  hideAll();
+  document.getElementById("instructions").style.display = "block";
+}
+function hideAll() {
+  ["instructions","login","game","scoreBoard","leaderboard"].forEach(id => {
+    document.getElementById(id).style.display = "none";
+  });
 }
 
-// Timer starten
+// ----------------- Timer -----------------
 function startOverallTimer() {
-  startTime = Date.now();
+  startTime = Date.now() - elapsedTime * 1000;
   timerInterval = setInterval(() => {
     elapsedTime = Math.floor((Date.now() - startTime) / 1000);
     document.getElementById("timer").textContent = `Time: ${elapsedTime}s`;
   }, 1000);
 }
-
-// Timer stoppen
 function stopOverallTimer() {
   clearInterval(timerInterval);
   document.getElementById("timer").textContent = `Total Time: ${elapsedTime}s`;
 }
 
-// Spiel starten
+// ----------------- Game -----------------
 function startGame() {
   playerName = document.getElementById("playerName").value.trim();
   if (!playerName) return alert("Please enter a name!");
 
   score = parseInt(localStorage.getItem(playerName)) || 0;
+  highscore = parseInt(localStorage.getItem(playerName + "_highscore")) || 0;
 
-  document.getElementById("login").style.display = "none";
+  hideAll();
   document.getElementById("game").style.display = "block";
   document.getElementById("scoreBoard").style.display = "block";
   document.getElementById("playAgain").style.display = "none";
 
   document.getElementById("displayName").textContent = playerName;
-  document.getElementById("displayScore").textContent = score;
+  document.getElementById("displayScore").textContent = `${score} (Highscore: ${highscore})`;
 
-  shuffle(riddles); // Zufällige Reihenfolge
+  currentRiddle = 0;
+  elapsedTime = 0;
+  shuffle(riddles);
   startOverallTimer();
   showRiddle();
 }
-
-// Zeige aktuelles Rätsel
 function showRiddle() {
   if (currentRiddle >= riddles.length) {
     document.getElementById("riddleText").textContent = "You've completed all riddles! 🎉";
@@ -137,9 +198,10 @@ function showRiddle() {
   document.getElementById("answerInput").value = "";
   document.getElementById("feedback").textContent = "";
   document.getElementById("answerInput").style.display = "inline";
+  document.getElementById("answerInput").onkeypress = function(e) {
+    if (e.key === "Enter") checkAnswer();
+  };
 }
-
-// Prüfe Antwort
 function checkAnswer() {
   const answer = document.getElementById("answerInput").value.trim().toLowerCase();
   const correctAnswer = riddles[currentRiddle].item.toLowerCase();
@@ -147,19 +209,34 @@ function checkAnswer() {
   if (answer === correctAnswer) {
     score++;
     localStorage.setItem(playerName, score);
+    if (score > highscore) {
+      highscore = score;
+      localStorage.setItem(playerName + "_highscore", highscore);
+    }
     document.getElementById("feedback").textContent = "Correct! ✅";
-    document.getElementById("displayScore").textContent = score;
+    document.getElementById("displayScore").textContent = `${score} (Highscore: ${highscore})`;
     currentRiddle++;
     setTimeout(showRiddle, 600);
   } else {
     document.getElementById("feedback").textContent = "Try again! ❌";
   }
 }
-
-// Spiel neu starten
+function skipRiddle() {
+  elapsedTime += 5; 
+  const timerEl = document.getElementById("timer");
+  timerEl.textContent = `Time: ${elapsedTime}s (+5s!)`;
+  timerEl.style.color = "red";
+  setTimeout(() => {
+    timerEl.style.color = "black";
+    timerEl.textContent = `Time: ${elapsedTime}s`;
+  }, 1000);
+  document.getElementById("feedback").textContent = "Skipped! ⏭️ (+5s penalty)";
+  currentRiddle++;
+  setTimeout(showRiddle, 600);
+}
 function restartGame() {
+  stopOverallTimer(); 
   currentRiddle = 0;
-  score = 0;
   elapsedTime = 0;
   shuffle(riddles);
   document.getElementById("playAgain").style.display = "none";
@@ -168,6 +245,37 @@ function restartGame() {
   startOverallTimer();
   showRiddle();
 }
+
+// ----------------- Leaderboard -----------------
+function updateLeaderboard() {
+  let scores = [];
+  for (let key in localStorage) {
+    if (key.endsWith("_highscore")) {
+      let name = key.replace("_highscore", "");
+      let hs = parseInt(localStorage.getItem(key));
+      scores.push({ name: name, highscore: hs });
+    }
+  }
+  scores.sort((a,b) => b.highscore - a.highscore);
+  const tbody = document.getElementById("leaderboardBody");
+  tbody.innerHTML = "";
+  scores.forEach((entry, index) => {
+    let row = `<tr><td>${index+1}</td><td>${entry.name}</td><td>${entry.highscore}</td></tr>`;
+    tbody.innerHTML += row;
+  });
+}
+
+// ----------------- Utils -----------------
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+// ----------------- Start -----------------
+showInstructions();
 </script>
 
 </body>
