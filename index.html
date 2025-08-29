@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Minecraft Riddle Game</title>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #f0f0f0; }
     #game, #login, #scoreBoard, #leaderboard, #instructions { display: none; }
     input { padding: 5px; font-size: 16px; }
     button { padding: 5px 10px; font-size: 16px; margin: 5px; }
-    #feedback { margin-top: 10px; font-weight: bold; }
-    #timer { font-weight: bold; margin-bottom: 10px; transition: color 0.3s; }
+    #feedback { margin-top: 10px; font-weight: bold; min-height: 22px; }
+    #timer { font-weight: bold; margin-bottom: 6px; transition: color 0.3s; }
+    #progress { font-size: 14px; opacity: 0.8; margin-bottom: 10px; }
     #playAgain { display: none; margin-top: 20px; }
     #leaderboard table { margin: 0 auto; border-collapse: collapse; }
-    #leaderboard th, #leaderboard td { border: 1px solid #333; padding: 5px 10px; }
+    #leaderboard th, #leaderboard td { border: 1px solid #333; padding: 6px 10px; }
     #leaderboard th { background: #ddd; }
   </style>
 </head>
@@ -24,12 +25,13 @@
 <div id="instructions">
   <h2>📖 Instructions</h2>
   <p>Welcome to the Minecraft Riddle Game!</p>
-  <ul style="text-align:left; display:inline-block;">
-    <li>Guess the correct Minecraft item from the riddle.</li>
+  <ul style="text-align:left; display:inline-block; max-width:600px;">
+    <li>Guess the correct Minecraft item/block/mob/thing from the riddle.</li>
     <li>Type your answer and press <b>Enter</b> or click <b>Submit</b>.</li>
-    <li>If you're stuck, use <b>Skip</b> ⏭️ (adds <b>+5 seconds penalty</b>).</li>
+    <li>If you're stuck, use <b>Skip</b> ⏭️ — this adds a <b>+5 seconds penalty</b> to your time.</li>
     <li>You earn <b>1 point</b> for each correct answer.</li>
-    <li>Your <b>highscore</b> is saved automatically.</li>
+    <li>Your personal <b>highscore</b> and the global <b>leaderboard</b> are saved locally in your browser.</li>
+    <li>There are <b>100 riddles</b> in total. Good luck!</li>
   </ul>
   <button onclick="showLogin()">Start Game</button>
   <button onclick="showLeaderboard()">Leaderboard 🏆</button>
@@ -38,23 +40,24 @@
 <!-- Login -->
 <div id="login">
   <p>Enter your name to start:</p>
-  <input type="text" id="playerName" placeholder="Your name">
+  <input type="text" id="playerName" placeholder="Your name" />
   <button onclick="startGame()">Play</button>
   <button onclick="backToInstructions()">⬅ Back</button>
 </div>
 
 <!-- Scoreboard -->
 <div id="scoreBoard">
-  Welcome, <span id="displayName"></span>!  
-  Your score: <span id="displayScore">0</span>  
+  Welcome, <span id="displayName"></span>!<br/>
+  Your score: <span id="displayScore">0</span>
   <div id="timer">Time: 0s</div>
+  <div id="progress"></div>
   <button onclick="showLeaderboard()">Leaderboard 🏆</button>
 </div>
 
 <!-- Spiel -->
 <div id="game">
   <p id="riddleText"></p>
-  <input type="text" id="answerInput" placeholder="Your answer">
+  <input type="text" id="answerInput" placeholder="Your answer" />
   <button onclick="checkAnswer()">Submit</button>
   <button onclick="skipRiddle()">Skip ⏭️</button>
   <p id="feedback"></p>
@@ -72,13 +75,14 @@
     </thead>
     <tbody id="leaderboardBody"></tbody>
   </table>
-  <br>
+  <br />
   <button onclick="backToInstructions()">⬅ Back</button>
 </div>
 
 <script>
-// ----------------- Rätsel -----------------
+// ----------------- Rätsel (100) -----------------
 const riddles = [
+  // (1-38) Deine ursprünglichen + zuvor ergänzten
   { item: "Stick", riddle: "I can be used to make torches, I’m not coal." },
   { item: "Diamond", riddle: "I’m very hard and rare, miners love me." },
   { item: "Apple", riddle: "I grow on trees and can restore health." },
@@ -115,7 +119,71 @@ const riddles = [
   { item: "Enchantment Table", riddle: "I let you enchant tools, weapons, and armor." },
   { item: "Obsidian", riddle: "I am very strong and needed for a Nether portal." },
   { item: "End Portal Frame", riddle: "I am needed to reach the End dimension." },
-  { item: "Dragon Egg", riddle: "I drop after defeating the Ender Dragon." }
+  { item: "Dragon Egg", riddle: "I drop after defeating the Ender Dragon." },
+
+  // (39-100) Neue, damit es 100 werden
+  { item: "Bread", riddle: "I’m baked from wheat and fill your hunger." },
+  { item: "Golden Apple", riddle: "I’m shiny and give you a golden boost when eaten." },
+  { item: "Enchanted Golden Apple", riddle: "I’m a rare purple treat with powerful effects." },
+  { item: "Cake", riddle: "I sit on a block and you can eat me slice by slice." },
+  { item: "Steak", riddle: "I’m cooked from beef and restore lots of hunger." },
+  { item: "Carrot", riddle: "I’m orange, grow in farms, and pigs like me." },
+  { item: "Potato", riddle: "I can be baked for a tastier meal." },
+  { item: "Beetroot", riddle: "I’m red and can be made into a simple soup." },
+  { item: "Wheat", riddle: "I’m a crop used to craft bread and feed animals." },
+  { item: "Sugar Cane", riddle: "I grow tall near water and help make paper." },
+  { item: "Melon", riddle: "I’m green outside, red inside, and sliced when broken." },
+  { item: "Pumpkin", riddle: "I can be carved and worn on your head." },
+  { item: "Honey Bottle", riddle: "I’m sweet and remove poison when you drink me." },
+  { item: "Milk Bucket", riddle: "I clear all potion effects when you drink me." },
+  { item: "Water Bucket", riddle: "I can save you from falls and help you farm." },
+  { item: "Lava Bucket", riddle: "I’m hot and smelt many items as a fuel." },
+  { item: "Flint and Steel", riddle: "I start fires and light Nether portals." },
+  { item: "Flint", riddle: "I’m a small shard used to craft arrows." },
+  { item: "Iron Ingot", riddle: "I’m smelted from ore and used for sturdy tools." },
+  { item: "Gold Ingot", riddle: "I’m shiny and used for powered rails and apples." },
+  { item: "Netherite Ingot", riddle: "I upgrade diamond gear to the best tier." },
+  { item: "Coal", riddle: "I’m a common fuel found in black ore veins." },
+  { item: "Charcoal", riddle: "I act like coal but come from smelting wood." },
+  { item: "Lapis Lazuli", riddle: "I’m blue and used for enchanting." },
+  { item: "Emerald", riddle: "Villagers value me for trading." },
+  { item: "Amethyst Shard", riddle: "I’m a purple crystal found in geodes." },
+  { item: "Copper Ingot", riddle: "I’m new and slowly turn green in the rain." },
+  { item: "Raw Iron", riddle: "I drop from iron ore before smelting." },
+  { item: "Raw Gold", riddle: "I drop from gold ore before smelting." },
+  { item: "Raw Copper", riddle: "I drop from copper ore before smelting." },
+  { item: "Stone", riddle: "I’m what cobblestone becomes when smelted." },
+  { item: "Cobblestone", riddle: "I’m the rough rock you get from mining stone." },
+  { item: "Mossy Cobblestone", riddle: "I’m cobblestone with a green overgrowth." },
+  { item: "Dirt", riddle: "I’m everywhere under your feet and plants like me." },
+  { item: "Sand", riddle: "I fall with gravity and smelt into glass." },
+  { item: "Glass", riddle: "I’m transparent and crafted from sand." },
+  { item: "TNT", riddle: "I go boom when ignited or powered." },
+  { item: "Gunpowder", riddle: "Creepers drop me; I help make explosives." },
+  { item: "Feather", riddle: "Chickens drop me; I’m used for arrows." },
+  { item: "Leather", riddle: "Cows drop me; I make early armor and books." },
+  { item: "Paper", riddle: "I’m thin and crafted from sugar cane." },
+  { item: "Book and Quill", riddle: "I let you write and sign your own pages." },
+  { item: "Banner", riddle: "I display patterns and colors as decoration." },
+  { item: "Lead", riddle: "I tie animals so they follow you." },
+  { item: "Name Tag", riddle: "I give a permanent name to mobs." },
+  { item: "Saddle", riddle: "I let you ride pigs and horses." },
+  { item: "Music Disc", riddle: "I’m a round collectible you can play in a box." },
+  { item: "Jukebox", riddle: "I play music when you feed me a disc." },
+  { item: "Note Block", riddle: "I make musical sounds when powered." },
+  { item: "Dispenser", riddle: "I shoot or place items when powered." },
+  { item: "Dropper", riddle: "I drop items without using them." },
+  { item: "Hopper", riddle: "I pull and push items between containers." },
+  { item: "Piston", riddle: "I push blocks forward when powered." },
+  { item: "Sticky Piston", riddle: "I push and pull blocks thanks to slime." },
+  { item: "Observer", riddle: "I detect block updates and send a pulse." },
+  { item: "Redstone Repeater", riddle: "I extend signals and add delay." },
+  { item: "Redstone Comparator", riddle: "I compare signal strengths precisely." },
+  { item: "Lever", riddle: "I’m a switch that toggles power on and off." },
+  { item: "Button", riddle: "I give a short pulse when pressed." },
+  { item: "Pressure Plate", riddle: "I trigger when stepped on or items drop on me." },
+  { item: "Tripwire Hook", riddle: "I arm a string trap to detect crossing." },
+  { item: "Ladder", riddle: "I help you climb vertically on walls." }
 ];
 
 // ----------------- Variablen -----------------
@@ -125,7 +193,7 @@ let playerName = "";
 let highscore = 0;
 let startTime;
 let elapsedTime = 0;
-let timerInterval;
+let timerInterval = null;
 
 // ----------------- Navigation -----------------
 function showInstructions() {
@@ -147,8 +215,18 @@ function backToInstructions() {
 }
 function hideAll() {
   ["instructions","login","game","scoreBoard","leaderboard"].forEach(id => {
-    document.getElementById(id).style.display = "none";
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
   });
+}
+
+// ----------------- Utils -----------------
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
 }
 
 // ----------------- Timer -----------------
@@ -160,11 +238,12 @@ function startOverallTimer() {
   }, 1000);
 }
 function stopOverallTimer() {
-  clearInterval(timerInterval);
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = null;
   document.getElementById("timer").textContent = `Total Time: ${elapsedTime}s`;
 }
 
-// ----------------- Game -----------------
+// ----------------- Game Flow -----------------
 function startGame() {
   playerName = document.getElementById("playerName").value.trim();
   if (!playerName) return alert("Please enter a name!");
@@ -186,22 +265,31 @@ function startGame() {
   startOverallTimer();
   showRiddle();
 }
+
 function showRiddle() {
-  if (currentRiddle >= riddles.length) {
+  const total = riddles.length;
+
+  if (currentRiddle >= total) {
     document.getElementById("riddleText").textContent = "You've completed all riddles! 🎉";
     document.getElementById("answerInput").style.display = "none";
+    document.getElementById("progress").textContent = `Riddles completed: ${total} / ${total}`;
     stopOverallTimer();
     document.getElementById("playAgain").style.display = "inline";
     return;
   }
+
   document.getElementById("riddleText").textContent = riddles[currentRiddle].riddle;
   document.getElementById("answerInput").value = "";
   document.getElementById("feedback").textContent = "";
   document.getElementById("answerInput").style.display = "inline";
+  document.getElementById("progress").textContent = `Riddle ${currentRiddle + 1} / ${total}`;
+
+  // Enter-Taste als Shortcut
   document.getElementById("answerInput").onkeypress = function(e) {
     if (e.key === "Enter") checkAnswer();
   };
 }
+
 function checkAnswer() {
   const answer = document.getElementById("answerInput").value.trim().toLowerCase();
   const correctAnswer = riddles[currentRiddle].item.toLowerCase();
@@ -209,10 +297,12 @@ function checkAnswer() {
   if (answer === correctAnswer) {
     score++;
     localStorage.setItem(playerName, score);
+
     if (score > highscore) {
       highscore = score;
       localStorage.setItem(playerName + "_highscore", highscore);
     }
+
     document.getElementById("feedback").textContent = "Correct! ✅";
     document.getElementById("displayScore").textContent = `${score} (Highscore: ${highscore})`;
     currentRiddle++;
@@ -221,8 +311,10 @@ function checkAnswer() {
     document.getElementById("feedback").textContent = "Try again! ❌";
   }
 }
+
+// Skip mit +5s und rotem Blinken
 function skipRiddle() {
-  elapsedTime += 5; 
+  elapsedTime += 5;
   const timerEl = document.getElementById("timer");
   timerEl.textContent = `Time: ${elapsedTime}s (+5s!)`;
   timerEl.style.color = "red";
@@ -230,12 +322,14 @@ function skipRiddle() {
     timerEl.style.color = "black";
     timerEl.textContent = `Time: ${elapsedTime}s`;
   }, 1000);
+
   document.getElementById("feedback").textContent = "Skipped! ⏭️ (+5s penalty)";
   currentRiddle++;
   setTimeout(showRiddle, 600);
 }
+
 function restartGame() {
-  stopOverallTimer(); 
+  stopOverallTimer();
   currentRiddle = 0;
   elapsedTime = 0;
   shuffle(riddles);
@@ -248,30 +342,23 @@ function restartGame() {
 
 // ----------------- Leaderboard -----------------
 function updateLeaderboard() {
-  let scores = [];
-  for (let key in localStorage) {
-    if (key.endsWith("_highscore")) {
-      let name = key.replace("_highscore", "");
-      let hs = parseInt(localStorage.getItem(key));
-      scores.push({ name: name, highscore: hs });
+  const scores = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.endsWith("_highscore")) {
+      const name = key.replace("_highscore", "");
+      const hs = parseInt(localStorage.getItem(key)) || 0;
+      scores.push({ name, highscore: hs });
     }
   }
-  scores.sort((a,b) => b.highscore - a.highscore);
+  scores.sort((a, b) => b.highscore - a.highscore);
+
   const tbody = document.getElementById("leaderboardBody");
   tbody.innerHTML = "";
   scores.forEach((entry, index) => {
-    let row = `<tr><td>${index+1}</td><td>${entry.name}</td><td>${entry.highscore}</td></tr>`;
+    const row = `<tr><td>${index + 1}</td><td>${entry.name}</td><td>${entry.highscore}</td></tr>`;
     tbody.innerHTML += row;
   });
-}
-
-// ----------------- Utils -----------------
-function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
 }
 
 // ----------------- Start -----------------
